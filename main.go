@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/cdmatta/api-gw/config"
@@ -9,7 +10,16 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+var (
+	GitBranch  string
+	GitSummary string
+	Version    string
+	BuildDate  string
+)
+
 func main() {
+	fmt.Printf("Branch=%s Git=%s Version=%s BuildDate=%s\n", GitBranch, GitSummary, Version, BuildDate)
+
 	logger := initZapLog()
 	defer logger.Sync()
 
