@@ -20,7 +20,9 @@ func (r *ReverseProxy) ListenAndServe(addr string) error {
 }
 
 func (r *ReverseProxy) SetRoute(route *Route) {
-	r.router.Handler(route.method, route.path, newReverseProxyHandler(route))
+	for _, method := range route.methods {
+		r.router.Handler(method, route.path, newReverseProxyHandler(route))
+	}
 }
 
 func newReverseProxyHandler(route *Route) *httputil.ReverseProxy {

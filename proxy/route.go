@@ -5,7 +5,7 @@ import (
 )
 
 type Route struct {
-	method      string
+	methods     []string
 	path        string
 	destination *url.URL
 }
@@ -14,8 +14,8 @@ func NewRoute() *Route {
 	return &Route{}
 }
 
-func (r *Route) WithMethod(method string) *Route {
-	r.method = method
+func (r *Route) WithMethods(methods []string) *Route {
+	r.methods = methods
 	return r
 }
 

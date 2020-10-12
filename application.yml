@@ -1,0 +1,9 @@
+server:
+  port: 9999
+routes:
+  - frontend:
+      path: /hw
+      methods:
+        - GET
+    backend:
+      url: http://localhost:8080/hw

@@ -1,8 +1,9 @@
 package main
 
 import (
-	"net/url"
+	"os"
 
+	"github.com/cdmatta/api-gw/config"
 	"github.com/cdmatta/api-gw/proxy"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -12,17 +13,34 @@ func main() {
 	logger := initZapLog()
 	defer logger.Sync()
 
+	if len(os.Args) == 1 {
+		zap.S().Fatalf("usage: %s <config-file>", os.Args[0])
+	}
+
+	configFile := os.Args[1]
+	apiGwConfig, err := config.LoadConfig(configFile)
+	if err != nil {
+		zap.S().Fatal(err)
+	}
+	zap.S().Infof("%+v", apiGwConfig)
+
 	gw := proxy.NewReverseProxy()
+	for _, routeConfig := range apiGwConfig.Routes {
+		url, err := routeConfig.BackendConfig.GetUrl()
+		if err != nil {
+			zap.S().Fatal(err)
+		}
 
-	backend, _ := url.Parse("http://127.0.0.1:8080")
-	r := proxy.NewRoute().
-		WithMethod("GET").
-		WithPath("/hw").
-		WithDestination(backend)
-	gw.SetRoute(r)
+		r := proxy.NewRoute().
+			WithMethods(routeConfig.Methods).
+			WithPath(routeConfig.Path).
+			WithDestination(url)
 
-	zap.S().Infof("Starting gateway on %s", ":8080")
-	gw.ListenAndServe(":8080")
+		gw.SetRoute(r)
+	}
+
+	zap.S().Infof("Starting gateway on %s", apiGwConfig.Server.GetListenAddress())
+	gw.ListenAndServe(apiGwConfig.Server.GetListenAddress())
 }
 
 func initZapLog() *zap.Logger {
