@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/cdmatta/api-gw/config"
+	"github.com/cdmatta/api-gw/middleware"
 	"github.com/cdmatta/api-gw/proxy"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -34,7 +35,13 @@ func main() {
 	}
 	zap.S().Infof("%+v", apiGwConfig)
 
-	gw := proxy.NewReverseProxy()
+	var (
+		accessLoggingMetrics = middleware.NewAccessLoggingMetricsMiddleware()
+		globalFilterFunc     = middleware.Compose(accessLoggingMetrics)
+
+		gateway = proxy.NewReverseProxy().WithGlobalFilterFunc(globalFilterFunc)
+	)
+
 	for _, routeConfig := range apiGwConfig.Routes {
 		url, err := routeConfig.BackendConfig.GetUrl()
 		if err != nil {
@@ -46,11 +53,11 @@ func main() {
 			WithPath(routeConfig.Path).
 			WithDestination(url)
 
-		gw.SetRoute(r)
+		gateway.SetRoute(r)
 	}
 
 	zap.S().Infof("Starting gateway on %s", apiGwConfig.Server.GetListenAddress())
-	gw.ListenAndServe(apiGwConfig.Server.GetListenAddress())
+	gateway.ListenAndServe(apiGwConfig.Server.GetListenAddress())
 }
 
 func initZapLog() *zap.Logger {
