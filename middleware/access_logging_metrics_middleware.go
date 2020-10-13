@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -34,15 +35,14 @@ func (a *AccessLoggingMetricsMiddleware) FilterFunction(next http.HandlerFunc) h
 		userAgent := r.UserAgent()
 		lrw := newLoggingResponseWriter(w)
 		statusCode := http.StatusOK
-		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
-			gatewayRequestsDuration.WithLabelValues(method, strconv.Itoa(statusCode), uri).Observe(v)
-		}))
+		start := time.Now()
 
 		next.ServeHTTP(lrw, r)
 
 		statusCode = lrw.statusCode
-		duration := timer.ObserveDuration().Milliseconds()
-		zap.S().Infof("%s %s %s %s %d '%s' '%s' %d", remoteAddress, method, uri, protocol, statusCode, referer, userAgent, duration)
+		duration := time.Since(start)
+		gatewayRequestsDuration.WithLabelValues(method, strconv.Itoa(statusCode), uri).Observe(duration.Seconds())
+		zap.S().Infof("%s %s %s %s %d '%s' '%s' %d", remoteAddress, method, uri, protocol, statusCode, referer, userAgent, duration.Milliseconds())
 	}
 }
 
