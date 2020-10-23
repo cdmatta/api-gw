@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 
+	"github.com/cdmatta/api-gw/httprouter"
 	"github.com/cdmatta/api-gw/middleware"
-	"github.com/julienschmidt/httprouter"
 )
 
 type ReverseProxy struct {
