@@ -34,5 +34,6 @@ func (rc *RequestContext) StringFor(key string) string {
 		return vt
 	}
 
-	msg := fmt.Sprintf(PanicPatternContextValueNotOfRequiredType, key, reflect.TypeOf(v), reflect.string)
+	msg := fmt.Sprintf(PanicPatternContextValueNotOfRequiredType, key, reflect.TypeOf(v), reflect.String)
+	panic(msg)
 }
